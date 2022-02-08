@@ -22,6 +22,11 @@ const Facing = {
   R: 'Right',
 };
 
+const Reroll = {
+  FloatingCrit: 'FloatingCrit',
+  ConfirmHeadHit: 'ConfirmHeadHit',
+};
+
 const Location = {
   LT: 'Left Torso',
   LL: 'Left Leg',
@@ -120,30 +125,32 @@ function rollD6() {
   return Math.floor(Math.random() * 6) + 1;
 }
 
-function roll2D6() {
-  let a = rollD6();
-  let b = rollD6();
-
+function rollND6(n) {
+  const rolls = [...Array(n)].map(rollD6);
   return {
-    roll1: a,
-    roll2: b,
-    sum: a + b,
+    rolls: rolls,
+    sum: rolls.reduce((a, b) => a + b),
   };
 }
 
+function roll2D6() {
+  return rollND6(2);
+}
+
 function Roll({roll}) {
+  const dice = roll.rolls.map((n, idx) => <Icon key={idx.toString()} type='material-community' name={'dice-' + n}/> );
+
   return (
     <View style={styles.row}>
       <Text style={[styles.defaultText, {width: 38}]}>{roll.sum}</Text>
-      <Icon type='material-community' name={'dice-' + roll.roll1}/>
-      <Icon type='material-community' name={'dice-' + roll.roll2}/>
+      {dice}
     </View>
   );
 }
 
 const initialSettings = {
-  floatingCrits: false,
-  confirmHeadHits: false,
+  floatingCrits: true,
+  confirmHeadHits: true,
 }
 
 function settingsReducer(state = initialSettings, action) {
@@ -241,7 +248,7 @@ function WeaponScreen({ navigation }) {
   const [facing, setFacing] = useState(Facing.F);
 
   const [rolls, setRolls] = useState({
-    clusterRoll: {sum: 0, roll1: 0, roll2: 0},
+    clusterRoll: {sum: 0, rolls: []},
     hits: 0,
     rolls: [],
   });
@@ -295,22 +302,69 @@ function WeaponScreen({ navigation }) {
     </View>
   );
 
-  let doRoll = () => {
+  const doRoll = () => {
     let newClusterRoll = roll2D6();
     let hits = clusterHitsTable[size][newClusterRoll.sum];
+    let rolls = [...Array(hits)].map(roll2D6).map((roll, idx) => {
+      if (settings.floatingCrits && roll.sum == 2) {
+        return {
+          ...roll,
+          reroll: {
+            roll: roll2D6(),
+            reason: Reroll.FloatingCrit,
+          }
+        };
+      } else if (settings.confirmHeadHits && roll.sum == 12) {
+        return {
+          ...roll,
+          reroll: {
+            roll: rollND6(1),
+            reason: Reroll.ConfirmHeadHit,
+          }
+        };
+      } else {
+        return roll;
+      }
+    });
+
     setRolls({
       clusterRoll: newClusterRoll,
       hits: hits,
-      rolls: [...Array(hits)].map(roll2D6),
+      rolls: rolls,
     });
   };
 
-  const renderItem = ({item}) => (
-    <View style={styles.row}>
-      <Roll roll={item}/>
-      <Text style={styles.defaultText}>{hitLocationTable[facing][item.sum]}</Text>
-    </View>
-  );
+  const renderItem = ({item, index}) => {
+    let hitLocation = hitLocationTable[facing][item.sum];
+    let unconfirmed = false;
+    let confirmed = false;
+
+    if (item.reroll !== undefined) {
+      switch (item.reroll.reason) {
+        case Reroll.FloatingCrit:
+          hitLocation = hitLocationTable[facing][item.reroll.roll.sum];
+          break;
+        case Reroll.ConfirmHeadHit:
+          if (item.reroll.roll.sum < 4) {
+            hitLocation = Location.CT;
+            unconfirmed = true;
+          } else {
+            confirmed = true;
+          }
+          break;
+      }
+    }
+
+    return (
+      <View style={styles.row}>
+        <Roll roll={item}/>
+        <Text style={styles.defaultText}>{hitLocation}</Text>
+        {item.sum == 2 && <Text style={styles.defaultText}> (Crit!)</Text>}
+        {unconfirmed && <Text style={styles.defaultText}> (Unconfirmed, rolled {item.reroll.roll.sum})</Text>}
+        {confirmed && <Text style={styles.defaultText}> (Confirmed, rolled {item.reroll.roll.sum})</Text>}
+      </View>
+    );
+  };
 
   let showResult = () => {
     return (

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Provider, connect, useDispatch, useSelector } from 'react-redux';
 import { createStore, combineReducers } from 'redux';
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, Image, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { FlatList, ImageBackground, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -152,6 +152,62 @@ function Roll({roll}) {
     <View style={styles.row}>
       <Text style={[styles.defaultText, {width: 38}]}>{roll.sum}</Text>
       {dice}
+    </View>
+  );
+}
+
+const hitTallyOffsets = {
+  [Location.LA]: {top: 65, left: 18, width: 42, height: 30},
+  [Location.LT]: {top: 55, left: 66, width: 48, height: 60},
+  [Location.RLT]: {top: 55, left: 66, width: 48, height: 60},
+  [Location.CT]: {top: 80, left: 118, width: 46, height: 120},
+  [Location.RCT]: {top: 80, left: 118, width: 46, height: 120},
+  [Location.RT]: {top: 55, left: 168, width: 48, height: 60},
+  [Location.RRT]: {top: 55, left: 168, width: 48, height: 60},
+  [Location.RA]: {top: 65, left: 221, width: 42, height: 30},
+  [Location.H]: {top: 30, left: 118, width: 46, height: 40},
+  [Location.LL]: {top: 288, left: 50, width: 52, height: 60},
+  [Location.RL]: {top: 288, left: 179, width: 52, height: 60},
+};
+
+function HitCount({tally, location_}) {
+  let hits = tally[location_];
+  if (!hits.hits) {
+    return <></>;
+  }
+
+  let style = hitTallyOffsets[location_];
+
+
+  return (
+    <View style={[style, styles.hitCount]}>
+      <Text>{hits.hits}{hits.crits > 0 && ' (' + hits.crits + ')'}</Text>
+    </View>
+  );
+}
+
+function HitTally({rolls, facing}) {
+  const tally = {};
+  Object.values(Location).forEach(loc => tally[loc] = {hits: 0, crits: 0});
+
+  rolls.forEach(roll => {
+    let hitLocation = roll.hit.location_ || hitLocationTable[facing][roll.hit.locationIndex]
+    tally[hitLocation].hits++;
+
+    if (roll.hit.type == HitType.Critical || roll.hit.type == HitType.FloatingCrit) {
+      tally[hitLocation].crits++;
+    }
+  });
+
+  console.log('The tally is:', tally);
+
+  const counts = Object.values(Location).map(location_ => <HitCount key={location_} tally={tally} location_={location_}/>);
+
+  return (
+    <View style={styles.container}>
+      <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
+        {counts}
+      </ImageBackground>
     </View>
   );
 }
@@ -412,6 +468,10 @@ function WeaponScreen({ navigation }) {
           {rolls.clusterRoll.sum > 0 && showResult()}
         </View>
       </>}
+      ListFooterComponent={
+      <>
+          <HitTally rolls={rolls.rolls} facing={facing} />
+      </>}
       data={rolls.rolls}
       keyExtractor={(roll, idx) => idx}
       renderItem={renderItem}
@@ -529,5 +589,10 @@ const styles = StyleSheet.create({
   },
   optionView: {
     marginBottom: 20,
+  },
+  hitCount: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -327,7 +327,7 @@ function WeaponScreen({ navigation }) {
   //});
   //
   const facingView = (
-    <View style={styles.row}>
+    <View style={[styles.optionView, styles.row]}>
       <Text style={styles.optionText}>Facing</Text>
       <View style={styles.row}>
         <TouchableOpacity

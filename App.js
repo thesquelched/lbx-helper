@@ -15,6 +15,14 @@ import {
 } from '@react-navigation/drawer';
 import mech from './assets/mech.png';
 
+const HitType = {
+  Regular: 'Regular',
+  Critical: 'Critical',
+  FloatingCrit: 'Floating Crit',
+  ConfirmedHeadHit: 'Confirmed Head Hit',
+  UnconfirmedHeadHit: 'Unconfirmed Head Hit',
+};
+
 const Facing = {
   L: 'Left',
   F: 'Front',
@@ -249,8 +257,8 @@ function WeaponScreen({ navigation }) {
 
   const [rolls, setRolls] = useState({
     clusterRoll: {sum: 0, rolls: []},
-    hits: 0,
     rolls: [],
+    hits: [],
   });
 
   //useEffect(() => {
@@ -307,61 +315,62 @@ function WeaponScreen({ navigation }) {
     let hits = clusterHitsTable[size][newClusterRoll.sum];
     let rolls = [...Array(hits)].map(roll2D6).map((roll, idx) => {
       if (settings.floatingCrits && roll.sum == 2) {
+        let reroll = {
+          roll: roll2D6(),
+          reason: Reroll.FloatingCrit,
+        };
+
         return {
           ...roll,
-          reroll: {
-            roll: roll2D6(),
-            reason: Reroll.FloatingCrit,
-          }
+          reroll: reroll,
+          hit: {
+            type: HitType.FloatingCrit,
+            locationIndex: reroll.roll.sum,
+          },
         };
       } else if (settings.confirmHeadHits && roll.sum == 12) {
+        let reroll = {
+          roll: rollND6(1),
+          reason: Reroll.ConfirmHeadHit,
+        };
+        let isConfirmed = reroll.roll.sum >= 4;
+
         return {
           ...roll,
-          reroll: {
-            roll: rollND6(1),
-            reason: Reroll.ConfirmHeadHit,
-          }
+          reroll: reroll,
+          hit: {
+            type: isConfirmed ? HitType.ConfirmedHeadHit : HitType.UnconfirmedHeadHit,
+            location_: isConfirmed ? Location.H : Location.CT,
+          },
         };
       } else {
-        return roll;
+        return {
+          ...roll,
+          hit: {
+            type: roll.sum == 2 ? HitType.Critical : HitType.Regular,
+            locationIndex: roll.sum,
+          }
+        };
       }
     });
 
     setRolls({
       clusterRoll: newClusterRoll,
-      hits: hits,
       rolls: rolls,
+      hits: hits,
     });
   };
 
   const renderItem = ({item, index}) => {
-    let hitLocation = hitLocationTable[facing][item.sum];
-    let unconfirmed = false;
-    let confirmed = false;
-
-    if (item.reroll !== undefined) {
-      switch (item.reroll.reason) {
-        case Reroll.FloatingCrit:
-          hitLocation = hitLocationTable[facing][item.reroll.roll.sum];
-          break;
-        case Reroll.ConfirmHeadHit:
-          if (item.reroll.roll.sum < 4) {
-            hitLocation = Location.CT;
-            unconfirmed = true;
-          } else {
-            confirmed = true;
-          }
-          break;
-      }
-    }
+    let hitLocation = item.hit.location_ || hitLocationTable[facing][item.hit.locationIndex]
 
     return (
       <View style={styles.row}>
         <Roll roll={item}/>
         <Text style={styles.defaultText}>{hitLocation}</Text>
-        {item.sum == 2 && <Text style={styles.defaultText}> (Crit!)</Text>}
-        {unconfirmed && <Text style={styles.defaultText}> (Unconfirmed, rolled {item.reroll.roll.sum})</Text>}
-        {confirmed && <Text style={styles.defaultText}> (Confirmed, rolled {item.reroll.roll.sum})</Text>}
+        {(item.hit.type == HitType.Critical || item.hit.type == HitType.FloatingCrit) && <Text style={styles.defaultText}> (Crit!)</Text>}
+        {item.hit.type == HitType.UnconfirmedHeadHit && <Text style={styles.defaultText}> (Unconfirmed, rolled {item.reroll.roll.sum})</Text>}
+        {item.hit.type == HitType.ConfirmedHeadHit && <Text style={styles.defaultText}> (Confirmed, rolled {item.reroll.roll.sum})</Text>}
       </View>
     );
   };

@@ -187,6 +187,10 @@ function HitCount({tally, location_}) {
 }
 
 function HitTally({rolls, facing}) {
+  if (rolls.length == 0) {
+    return <></>;
+  }
+
   const tally = {};
   Object.values(Location).forEach(loc => tally[loc] = {hits: 0, crits: 0});
 
@@ -466,11 +470,8 @@ function WeaponScreen({ navigation }) {
           </TouchableOpacity>
 
           {rolls.clusterRoll.sum > 0 && showResult()}
-        </View>
-      </>}
-      ListFooterComponent={
-      <>
           <HitTally rolls={rolls.rolls} facing={facing} />
+        </View>
       </>}
       data={rolls.rolls}
       keyExtractor={(roll, idx) => idx}

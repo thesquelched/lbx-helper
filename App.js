@@ -325,6 +325,7 @@ function WeaponScreen({ navigation }) {
   //  console.log('Size', size);
   //  console.log('Roll state:', rolls);
   //});
+  //
   const facingView = (
     <View style={styles.row}>
       <Text style={styles.optionText}>Facing</Text>
@@ -449,8 +450,6 @@ function WeaponScreen({ navigation }) {
     );
   };
 
-  //<Image key='1' source={mech} style={{ height: 400, width: 280 }}/>
-
   const sizeView = SizeSelector([20, 10, 5, 2], size, setSize);
 
   return (
@@ -478,22 +477,6 @@ function WeaponScreen({ navigation }) {
       renderItem={renderItem}
     />
   );
-  //return (
-  //  <ScrollView style={styles.scrollContainer} contentContainerStyle={[styles.container, {flex: 0}]}>
-  //    {sizeView}
-
-  //    <TouchableOpacity
-  //      onPress={doRoll}
-  //      style={styles.button}>
-  //      <Text style={styles.sideText}>
-  //        Roll!
-  //      </Text>
-  //    </TouchableOpacity>
-
-  //    {rolls.clusterRoll.sum > 0 && showResult()}
-  //    <StatusBar style="auto" />
-  //  </ScrollView>
-  //);
 }
 
 const Drawer = createDrawerNavigator();

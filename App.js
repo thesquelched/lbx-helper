@@ -184,10 +184,13 @@ function HitTally({rolls, facing}) {
   const counts = Object.values(Location).map(location_ => <HitCount key={location_} tally={tally} location_={location_}/>);
 
   return (
-    <View style={styles.container}>
-      <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
-        {counts}
-      </ImageBackground>
+    <View style={[styles.container, {paddingTop: 20}]}>
+      <Text style={styles.section}>Hit summary</Text>
+      <View style={styles.container}>
+        <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
+          {counts}
+        </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -413,7 +416,7 @@ function WeaponScreen({ navigation, route }) {
           <Text style={styles.defaultText}>Cluster roll:</Text>
           <Roll roll={rolls.clusterRoll}/>
         </View>
-        <View style={styles.row}>
+        <View style={[styles.row, styles.padded]}>
           <Text style={styles.defaultText}>Cluster hits: {rolls.hits}</Text>
         </View>
       </View>
@@ -432,16 +435,20 @@ function WeaponScreen({ navigation, route }) {
 
           <TouchableOpacity
             onPress={doRoll}
-            style={styles.button}>
+            style={[styles.button, styles.padded]}>
             <Text style={styles.sideText}>
               Roll!
             </Text>
           </TouchableOpacity>
 
           {rolls.clusterRoll.sum > 0 && showResult()}
-          <HitTally rolls={rolls.rolls} facing={facing} />
         </View>
       </>}
+      ListFooterComponent={
+      <>
+        <HitTally rolls={rolls.rolls} facing={facing} />
+      </>
+      }
       data={rolls.rolls}
       keyExtractor={(roll, idx) => idx}
       renderItem={renderItem}
@@ -489,6 +496,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  padded: {
+    marginBottom: 20,
+  },
   row: {
     alignItems: 'center',
     backgroundColor: '#fff',
@@ -501,6 +511,10 @@ const styles = StyleSheet.create({
   },
   defaultText: {
     fontSize: 18,
+    color: '#000',
+  },
+  section: {
+    fontSize: 24,
     color: '#000',
   },
   sideText: {

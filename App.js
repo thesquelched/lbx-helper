@@ -309,10 +309,11 @@ function SizeSelector(sizes, stateValue, stateSetter) {
   );
 }
 
-function WeaponScreen({ navigation }) {
+function WeaponScreen({ navigation, route }) {
   const settings = useSelector(state => state.settings);
+  const sizes = route.params.sizes;
 
-  const [size, setSize] = useState(20);
+  const [size, setSize] = useState(sizes[0]);
   const [facing, setFacing] = useState(Facing.F);
 
   const [rolls, setRolls] = useState({
@@ -450,7 +451,7 @@ function WeaponScreen({ navigation }) {
     );
   };
 
-  const sizeView = SizeSelector([20, 10, 5, 2], size, setSize);
+  const sizeView = SizeSelector(sizes, size, setSize);
 
   return (
     <FlatList
@@ -482,13 +483,15 @@ function WeaponScreen({ navigation }) {
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
 
+const WeaponSizeContext = React.createContext([]);
+
 function MainStackScreen() {
   return (
     <Drawer.Navigator tabBarPosition='bottom' drawerContent={(props) => <CustomDrawerContent {...props} />}>
-      <Drawer.Screen name='LB-X Autocannon' component={WeaponScreen} />
-      <Drawer.Screen name='Long-Range Missiles (LRM)' component={WeaponScreen} />
-      <Drawer.Screen name='Medium-Range Missiles (MRM)' component={WeaponScreen} />
-      <Drawer.Screen name='Short-Range Missiles (SRM)' component={WeaponScreen} />
+      <Drawer.Screen name='LB-X Autocannon' component={WeaponScreen} initialParams={{sizes: [20, 10, 5, 2]}} />
+      <Drawer.Screen name='Long-Range Missiles (LRM)' component={WeaponScreen} initialParams={{sizes: [20, 10, 5, 2]}} />
+      <Drawer.Screen name='Medium-Range Missiles (MRM)' component={WeaponScreen} initialParams={{sizes: [40, 30, 20, 10]}} />
+      <Drawer.Screen name='Short-Range Missiles (SRM)' component={WeaponScreen} initialParams={{sizes: [6, 4, 2]}} />
     </Drawer.Navigator>
   );
 }

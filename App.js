@@ -216,44 +216,55 @@ const hitTallyOffsets = {
   [Location.RL]: {top: 288, left: 179, width: 52, height: 60},
 };
 
-function HitCount({tally, location_}) {
-  let hits = tally[location_];
+function HitCount({tally, location_, weapon}) {
+  const hits = tally[location_];
   if (!hits.hits) {
     return <></>;
   }
 
-  let style = hitTallyOffsets[location_];
-
+  const style = hitTallyOffsets[location_];
 
   return (
     <View style={[style, styles.hitCount]}>
-      <Text>{hits.hits}{hits.crits > 0 && ' (' + hits.crits + ')'}</Text>
+      <Text>H: {hits.hits}</Text>
+      {hits.crits > 0 && <Text>C: {hits.crits}</Text>}
+      {weapon.damage > 1 || weapon.grouped && <Text>D: {hits.damage}</Text>}
     </View>
   );
 }
 
-function HitTally({rolls, facing}) {
+function HitTally({rolls, facing, weapon}) {
   if (rolls.length == 0) {
     return <></>;
   }
 
   const tally = {};
-  Object.values(Location).forEach(loc => tally[loc] = {hits: 0, crits: 0});
+  Object.values(Location).forEach(loc => tally[loc] = {hits: 0, crits: 0, damage: 0});
 
   rolls.forEach(roll => {
     let hitLocation = roll.hit.location_ || hitLocationTable[facing][roll.hit.locationIndex]
     tally[hitLocation].hits++;
+    tally[hitLocation].damage += roll.hit.damage;
 
     if (roll.hit.type == HitType.Critical || roll.hit.type == HitType.FloatingCrit) {
       tally[hitLocation].crits++;
     }
   });
 
-  const counts = Object.values(Location).map(location_ => <HitCount key={location_} tally={tally} location_={location_}/>);
+  const counts = Object.values(Location).map(location_ => {
+    return (
+      <HitCount
+        key={location_}
+        tally={tally}
+        location_={location_}
+        weapon={weapon}
+      />
+    );;
+  });
 
   return (
     <View style={[styles.container, {paddingTop: 20}]}>
-      <Text style={styles.section}>Hit summary</Text>
+      <Text style={styles.section}>Summary</Text>
       <View style={styles.container}>
         <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
           {counts}
@@ -633,7 +644,7 @@ function WeaponScreen({ navigation, route }) {
       ListFooterComponent={
       <>
         <View style={[styles.separator, {marginHorizontal: '2%'}]}/>
-        <HitTally rolls={rolls.rolls} facing={facing} />
+        <HitTally rolls={rolls.rolls} facing={facing} weapon={weapon} />
       </>
       }
       data={rolls.rolls}
@@ -751,7 +762,7 @@ const styles = StyleSheet.create({
     marginHorizontal: '1%',
   },
   optionView: {
-    marginBottom: 20,
+    paddingVertical: 10,
   },
   hitCount: {
     position: 'absolute',

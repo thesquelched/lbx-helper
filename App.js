@@ -5,7 +5,7 @@ import { createStore, combineReducers } from 'redux';
 import { StatusBar } from 'expo-status-bar';
 import { FlatList, Pressable, ImageBackground, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import {
  createDrawerNavigator,
@@ -13,7 +13,16 @@ import {
  DrawerItemList,
  DrawerItem,
 } from '@react-navigation/drawer';
+
 import mech from './assets/mech.png';
+
+const Theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: 'white',
+  },
+};
 
 const HitType = {
   Regular: 'Regular',
@@ -375,11 +384,11 @@ function ModifiersSelector(weapon, stateValue, stateSetter) {
   });
 
   return (
-    <View style={[styles.container, styles.optionView, {alignItems: 'flex-start', width: '96%'}]}>
-      <Text style={[styles.optionText, {paddingBottom: 10}]}>Modifiers</Text>
-      <View style={[styles.container, {
+    <View style={[styles.row, styles.optionView, {flex: 1, justifyContent: 'space-between'}]}>
+      <Text style={styles.optionText}>Modifiers</Text>
+      <View style={[{
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
       }]}>
         {buttons}
       </View>
@@ -404,7 +413,7 @@ function SizeSelector(sizes, stateValue, stateSetter) {
   });
 
   return (
-    <View style={[styles.row, styles.optionView, {justifyContent: 'space-around'}]}>
+    <View style={[styles.row, styles.optionView, {justifyContent: 'space-between'}]}>
       <Text style={styles.optionText}>Size</Text>
       <View style={[styles.container, {
         flexDirection: 'row',
@@ -443,7 +452,7 @@ function WeaponScreen({ navigation, route }) {
   //});
   //
   const facingView = (
-    <View style={[styles.optionView, styles.row, {justifyContent: 'space-around'}]}>
+    <View style={[styles.row, styles.optionView, {justifyContent: 'space-between'}]}>
       <Text style={styles.optionText}>Facing</Text>
       <View style={[styles.container, {flexDirection: 'row', justifyContent: 'flex-end'}]}>
         <TouchableOpacity
@@ -569,9 +578,9 @@ function WeaponScreen({ navigation, route }) {
 
     var flag = null;
     if (item.hit.type == HitType.Critical || item.hit.type == HitType.FloatingCrit) {
-      flag = 'warning';
+      flag = {name: 'warning', color: 'red'};
     } else if (item.hit.type == HitType.UnconfirmedHeadHit || item.hit.type == HitType.ConfirmedHeadHit) {
-      flag = 'info';
+      flag = {name: 'info', color: 'blue'};
     }
 
     return (
@@ -581,7 +590,7 @@ function WeaponScreen({ navigation, route }) {
           <Text style={[styles.defaultText, styles.hitTableLocation]}>{hitLocation}</Text>
           <View style={[styles.row, styles.hitTableDamage]}>
             <Text style={styles.defaultText}>{item.hit.damage}</Text>
-            {flag !== null && <Icon name={flag}/>}
+            {flag !== null && <Icon name={flag.name} color={flag.color}/>}
           </View>
         </View>
         {item.showDetail && (
@@ -635,21 +644,21 @@ function WeaponScreen({ navigation, route }) {
         </View>
         {rolls.clusterRoll.sum > 0 && (
         <View style={styles.row}>
-          <Text style={[styles.defaultText, styles.hitTableRoll]}>Roll</Text>
-          <Text style={[styles.defaultText, styles.hitTableLocation]}>Location</Text>
-          <Text style={[styles.defaultText, styles.hitTableDamage]}>Damage</Text>
+          <Text style={[styles.headerText, styles.hitTableRoll]}>Roll</Text>
+          <Text style={[styles.headerText, styles.hitTableLocation]}>Location</Text>
+          <Text style={[styles.headerText, styles.hitTableDamage]}>Damage</Text>
           <View style={styles.separator}/>
         </View>)}
       </>}
       ListFooterComponent={
       <>
-        <View style={[styles.separator, {marginHorizontal: '2%'}]}/>
         <HitTally rolls={rolls.rolls} facing={facing} weapon={weapon} />
       </>
       }
       data={rolls.rolls}
       keyExtractor={(roll, idx) => idx}
       renderItem={renderItem}
+      style={{marginHorizontal: '1%'}}
     />
   );
 }
@@ -673,7 +682,7 @@ function MainStackScreen() {
 export default function App() {
   return (
     <Provider store={store}>
-      <NavigationContainer>
+      <NavigationContainer theme={Theme}>
         <Stack.Navigator>
           <Stack.Group>
             <Stack.Screen name='Weapons' component={MainStackScreen} />
@@ -702,13 +711,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: '2%',
   },
   scrollContainer: {
     backgroundColor: '#fff',
   },
   defaultText: {
     fontSize: 18,
+    color: '#000',
+  },
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#000',
   },
   section: {
@@ -722,6 +735,8 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 18,
     color: '#000',
+    textAlign: 'left',
+    paddingVertical: 12,
   },
   button: {
     backgroundColor: '#ccc',
@@ -763,6 +778,7 @@ const styles = StyleSheet.create({
   },
   optionView: {
     paddingVertical: 10,
+    width: '100%',
   },
   hitCount: {
     position: 'absolute',

@@ -25,8 +25,7 @@ const HitType = {
 
 const Facing = {
   L: 'Left',
-  F: 'Front',
-  B: 'Rear',
+  C: 'Front/Back',
   R: 'Right',
 };
 
@@ -44,9 +43,6 @@ const Location = {
   RL: 'Right Leg',
   RA: 'Right Arm',
   H: 'Head',
-  RLT: 'Rear Left Torso',
-  RCT: 'Rear Center Torso',
-  RRT: 'Rear Right Torso',
 };
 
 const clusterHitsTable = {
@@ -82,7 +78,7 @@ const hitLocationTable = {
     Location.RL,
     Location.H,
   ],
-  [Facing.F]: [
+  [Facing.C]: [
     null,
     null,
     Location.CT,
@@ -92,21 +88,6 @@ const hitLocationTable = {
     Location.RT,
     Location.CT,
     Location.LT,
-    Location.LL,
-    Location.LA,
-    Location.LA,
-    Location.H,
-  ],
-  [Facing.B]: [
-    null,
-    null,
-    Location.RCT,
-    Location.RA,
-    Location.RA,
-    Location.RL,
-    Location.RRT,
-    Location.RCT,
-    Location.RLT,
     Location.LL,
     Location.LA,
     Location.LA,
@@ -159,11 +140,8 @@ function Roll({roll}) {
 const hitTallyOffsets = {
   [Location.LA]: {top: 65, left: 18, width: 42, height: 30},
   [Location.LT]: {top: 55, left: 66, width: 48, height: 60},
-  [Location.RLT]: {top: 55, left: 66, width: 48, height: 60},
   [Location.CT]: {top: 80, left: 118, width: 46, height: 120},
-  [Location.RCT]: {top: 80, left: 118, width: 46, height: 120},
   [Location.RT]: {top: 55, left: 168, width: 48, height: 60},
-  [Location.RRT]: {top: 55, left: 168, width: 48, height: 60},
   [Location.RA]: {top: 65, left: 221, width: 42, height: 30},
   [Location.H]: {top: 30, left: 118, width: 46, height: 40},
   [Location.LL]: {top: 288, left: 50, width: 52, height: 60},
@@ -296,10 +274,11 @@ function SizeSelector(sizes, stateValue, stateSetter) {
   });
 
   return (
-    <View style={[styles.row, styles.optionView]}>
+    <View style={[styles.row, styles.optionView, {justifyContent: 'space-around'}]}>
       <Text style={styles.optionText}>Size</Text>
       <View style={[styles.container, {
         flexDirection: 'row',
+        justifyContent: 'flex-end',
       }]}>
         {buttons}
       </View>
@@ -312,7 +291,7 @@ function WeaponScreen({ navigation, route }) {
   const sizes = route.params.sizes;
 
   const [size, setSize] = useState(sizes[0]);
-  const [facing, setFacing] = useState(Facing.F);
+  const [facing, setFacing] = useState(Facing.C);
 
   const [rolls, setRolls] = useState({
     clusterRoll: {sum: 0, rolls: []},
@@ -326,9 +305,9 @@ function WeaponScreen({ navigation, route }) {
   //});
   //
   const facingView = (
-    <View style={[styles.optionView, styles.row]}>
+    <View style={[styles.optionView, styles.row, {justifyContent: 'space-around'}]}>
       <Text style={styles.optionText}>Facing</Text>
-      <View style={styles.row}>
+      <View style={[styles.container, {flexDirection: 'row', justifyContent: 'flex-end'}]}>
         <TouchableOpacity
           style={[
             styles.facingButton,
@@ -342,20 +321,12 @@ function WeaponScreen({ navigation, route }) {
         <TouchableOpacity
           style={[
             styles.facingButton,
-            facing === Facing.F ? styles.focusedButton : {},
+            facing === Facing.C ? styles.focusedButton : {},
           ]}
-          onPress={ () => setFacing(Facing.F) } >
-          <Text style={styles.sideText}>{Facing.F}</Text>
+          onPress={ () => setFacing(Facing.C) } >
+          <Text style={styles.sideText}>{Facing.C}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.facingButton,
-            facing === Facing.B ? styles.focusedButton : {},
-          ]}
-          onPress={ () => setFacing(Facing.B) } >
-          <Text style={styles.sideText}>{Facing.B}</Text>
-        </TouchableOpacity>
 
         <TouchableOpacity
           style={[
@@ -529,15 +500,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   defaultText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#000',
   },
   sideText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#000',
   },
   optionText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#000',
   },
   button: {

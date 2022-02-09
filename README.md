@@ -11,12 +11,19 @@ React Native app to help with rolling clusters in Battletech.
     * LRM
     * MRM
     * SRM
-* Options
+* Supports the following equipment that modifies cluster rolls:
+    * NARC
+    * Artemis IV/V FCS
+    * AMS
+    * Apollo FCS
+* Optinoal settings
     * Floating crits
     * Confirm head hits (50% chance for head hit to instead hit center torso)
 
 ## TODO
 
-* Artemis
-* Hyper-Assault Gauss
-* Re-roll individual rolls (e.g. to use Edge to re-roll a crit)
+* More weapons
+    * HAG
+    * MML
+    * ATM
+* Vehicle locations

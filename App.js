@@ -124,23 +124,25 @@ const Modifier = {
     id: 'ArtemisIV',
     label: 'Artemis IV',
     value: 2,
-    mutuallyExclusiveWith: ['ArtemisV'],
+    mutuallyExclusiveWith: ['ArtemisV', 'NARC'],
   },
   ArtemisV: {
     id: 'ArtemisV',
     label: 'Artemis V',
     value: 3,
-    mutuallyExclusiveWith: ['ArtemisIV'],
+    mutuallyExclusiveWith: ['ArtemisIV', 'NARC'],
   },
   Apollo: {
     id: 'Apollo',
     label: 'Apollo',
     value: -1,
+    mutuallyExclusiveWith: ['NARC'],
   },
   NARC: {
     id: 'NARC',
     label: 'NARC',
     value: 2,
+    mutuallyExclusiveWith: ['ArtemisIV', 'ArtemisV', 'Apollo'],
   },
   AMS: {
     id: 'AMS',

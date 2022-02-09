@@ -110,20 +110,70 @@ const hitLocationTable = {
   ]
 };
 
-function makeWeapon(name, sizes, damage=1, grouped=true) {
+const Modifier = {
+  ArtemisIV: {
+    id: 'ArtemisIV',
+    label: 'Artemis IV',
+    value: 2,
+    mutuallyExclusiveWith: ['ArtemisV'],
+  },
+  ArtemisV: {
+    id: 'ArtemisV',
+    label: 'Artemis V',
+    value: 3,
+    mutuallyExclusiveWith: ['ArtemisIV'],
+  },
+  Apollo: {
+    id: 'Apollo',
+    label: 'Apollo',
+    value: -1,
+  },
+  NARC: {
+    id: 'NARC',
+    label: 'NARC',
+    value: 2,
+  },
+  AMS: {
+    id: 'AMS',
+    label: 'AMS',
+    value: -4,
+  },
+};
+
+function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[]} = {}) {
   return {
     name: name,
     sizes: sizes,
     damage: damage,
     grouped: grouped,
+    modifiers: modifiers,
   };
 }
 
+let a = 'foo';
 const Weapon = {
-  LBX: makeWeapon('LB-X Autocannon', [20, 10, 5, 2], 1, false),
-  LRM: makeWeapon('Long-Range Missiles (LRM)', [20, 10, 5, 2]),
-  MRM: makeWeapon('Medium-Range Missiles (MRM)', [40, 30, 20, 10]),
-  SRM: makeWeapon('Short-Range Missiles (SRM)', [6, 4, 2], 2, false),
+  LBX: makeWeapon({
+    name: 'LB-X Autocannon',
+    sizes: [20, 10, 5, 2],
+    grouped: false,
+  }),
+  LRM: makeWeapon({
+    name: 'Long-Range Missiles (LRM)',
+    sizes: [20, 10, 5, 2],
+    modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
+  }),
+  MRM: makeWeapon({
+    name: 'Medium-Range Missiles (MRM)',
+    sizes: [40, 30, 20, 10],
+    modifiers: [Modifier.Apollo, Modifier.AMS],
+  }),
+  SRM: makeWeapon({
+    name: 'Short-Range Missiles (SRM)',
+    sizes: [6, 4, 2],
+    damage: 2,
+    grouped: false,
+    modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
+  }),
 };
 
 
@@ -135,7 +185,7 @@ function rollND6(n) {
   const rolls = [...Array(n)].map(rollD6);
   return {
     rolls: rolls,
-    sum: rolls.reduce((a, b) => a + b),
+    sum: rolls.reduce((a, b) => a + b, 0),
   };
 }
 
@@ -278,6 +328,54 @@ function SettingsScreen({ navigation }) {
   );
 }
 
+function ModifiersSelector(weapon, stateValue, stateSetter) {
+  if (weapon.modifiers.length == 0) {
+    return <></>;
+  }
+
+  const buttons = weapon.modifiers.map((mod, idx) => {
+    const action = () => {
+      const newValue = !stateValue[mod.id]
+      const updates = {
+        [mod.id]: newValue,
+      };
+
+      // Check for mutual exclusivity
+      if (newValue && mod.mutuallyExclusiveWith) {
+        mod.mutuallyExclusiveWith.forEach(exclude => updates[exclude] = false);
+      }
+
+      stateSetter({...stateValue, ...updates});
+    };
+
+    return (
+      <TouchableOpacity
+        key={idx.toString()}
+        style={[
+          styles.modButton,
+          idx == 0 ? styles.buttonLeft : (idx == weapon.modifiers.length - 1 ? styles.buttonRight : {}),
+          stateValue[mod.id] ? styles.focusedButton : {},
+        ]}
+        onPress={action}
+      >
+        <Text style={styles.sideText}>{mod.label}</Text>
+      </TouchableOpacity>
+    );
+  });
+
+  return (
+    <View style={[styles.container, styles.optionView, {alignItems: 'flex-start', width: '96%'}]}>
+      <Text style={[styles.optionText, {paddingBottom: 10}]}>Modifiers</Text>
+      <View style={[styles.container, {
+        flexDirection: 'row',
+        justifyContent: 'center',
+      }]}>
+        {buttons}
+      </View>
+    </View>
+  );
+}
+
 function SizeSelector(sizes, stateValue, stateSetter) {
   let buttons = sizes.map((size, idx) => {
     return (
@@ -315,10 +413,17 @@ function WeaponScreen({ navigation, route }) {
   const [size, setSize] = useState(sizes[0]);
   const [facing, setFacing] = useState(Facing.C);
 
+  const initialModState = {};
+  Object.values(weapon.modifiers).forEach(mod => initialModState[mod.id] = false);
+
+  const [modifiers, setModifiers] = useState(initialModState);
+
   const [rolls, setRolls] = useState({
     clusterRoll: {sum: 0, rolls: []},
     rolls: [],
     hits: [],
+    activeModifiers: [],
+    totalModifier: 0,
   });
 
   //useEffect(() => {
@@ -364,7 +469,13 @@ function WeaponScreen({ navigation, route }) {
   );
 
   const doRoll = () => {
-    const newClusterRoll = roll2D6();
+    const activeModifiers = Object.keys(modifiers).filter(key => modifiers[key]).map(mod => Modifier[mod]);
+    const modifier = activeModifiers.map(mod => mod.value).reduce((a, b) => a + b, 0);
+    const baseClusteRoll = roll2D6();
+    const newClusterRoll = {
+      ...baseClusteRoll,
+      sum: Math.min(12, Math.max(2, baseClusteRoll.sum + modifier)),
+    };
     const hits = clusterHitsTable[size][newClusterRoll.sum];
     const groups = weapon.grouped ? Math.ceil(hits / 5) : hits;
     const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
@@ -422,6 +533,8 @@ function WeaponScreen({ navigation, route }) {
 
     setRolls({
       clusterRoll: newClusterRoll,
+      modifiers: activeModifiers,
+      totalModifier: modifier,
       rolls: rolls,
       hits: hits,
     });
@@ -476,12 +589,16 @@ function WeaponScreen({ navigation, route }) {
     return (
       <View style={[styles.row, {paddingBottom: 15}]}>
         <Roll roll={rolls.clusterRoll} text='Cluster roll:'/>
+        {rolls.modifiers.length > 0 && (
+          <Text style={styles.defaultText}> (Mod: {rolls.totalModifier < 0 ? rolls.totalModifier : `+${rolls.totalModifier}`})</Text>
+        )}
         <Text style={styles.defaultText}> ({rolls.hits} hits)</Text>
       </View>
     );
   };
 
   const sizeView = SizeSelector(sizes, size, setSize);
+  const modView = ModifiersSelector(weapon, modifiers, setModifiers);
 
   return (
     <FlatList
@@ -492,6 +609,7 @@ function WeaponScreen({ navigation, route }) {
       <>
         <View style={styles.container}>
           {sizeView}
+          {modView}
           {facingView}
 
           <TouchableOpacity
@@ -504,12 +622,13 @@ function WeaponScreen({ navigation, route }) {
 
           {rolls.clusterRoll.sum > 0 && showResult()}
         </View>
+        {rolls.clusterRoll.sum > 0 && (
         <View style={styles.row}>
           <Text style={[styles.defaultText, styles.hitTableRoll]}>Roll</Text>
           <Text style={[styles.defaultText, styles.hitTableLocation]}>Location</Text>
           <Text style={[styles.defaultText, styles.hitTableDamage]}>Damage</Text>
           <View style={styles.separator}/>
-        </View>
+        </View>)}
       </>}
       ListFooterComponent={
       <>
@@ -608,6 +727,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 1,
     padding: 12,
     width: 50,
+    alignItems: 'center',
+  },
+  modButton: {
+    backgroundColor: '#ccc',
+    marginHorizontal: 1,
+    padding: 12,
     alignItems: 'center',
   },
   buttonLeft: {

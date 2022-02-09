@@ -203,8 +203,6 @@ function HitTally({rolls, facing}) {
     }
   });
 
-  console.log('The tally is:', tally);
-
   const counts = Object.values(Location).map(location_ => <HitCount key={location_} tally={tally} location_={location_}/>);
 
   return (

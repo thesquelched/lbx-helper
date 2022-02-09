@@ -462,6 +462,7 @@ function WeaponScreen({ navigation, route }) {
         </View>
         {item.showDetail && (
           <View style={styles.container}>
+            {item.hit.type == HitType.Critical && <Text style={styles.defaultText}>Critical hit</Text>}
             {item.hit.type == HitType.FloatingCrit && <Roll roll={item.reroll.roll} text='Floating crit, rolled'/>}
             {item.hit.type == HitType.UnconfirmedHeadHit && <Roll roll={item.reroll.roll} text='Unconfirmed head hit, rolled'/>}
             {item.hit.type == HitType.ConfirmedHeadHit && <Roll roll={item.reroll.roll} text='Confirmed head hit, rolled'/>}

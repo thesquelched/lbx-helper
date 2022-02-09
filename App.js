@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Provider, connect, useDispatch, useSelector } from 'react-redux';
 import { createStore, combineReducers } from 'redux';
 import { StatusBar } from 'expo-status-bar';
-import { FlatList, ImageBackground, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { FlatList, Pressable, ImageBackground, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -110,6 +110,23 @@ const hitLocationTable = {
   ]
 };
 
+function makeWeapon(name, sizes, damage=1, grouped=true) {
+  return {
+    name: name,
+    sizes: sizes,
+    damage: damage,
+    grouped: grouped,
+  };
+}
+
+const Weapon = {
+  LBX: makeWeapon('LB-X Autocannon', [20, 10, 5, 2], 1, false),
+  LRM: makeWeapon('Long-Range Missiles (LRM)', [20, 10, 5, 2]),
+  MRM: makeWeapon('Medium-Range Missiles (MRM)', [40, 30, 20, 10]),
+  SRM: makeWeapon('Short-Range Missiles (SRM)', [6, 4, 2], 2, false),
+};
+
+
 function rollD6() {
   return Math.floor(Math.random() * 6) + 1;
 }
@@ -126,12 +143,13 @@ function roll2D6() {
   return rollND6(2);
 }
 
-function Roll({roll}) {
+function Roll({roll, text}) {
   const dice = roll.rolls.map((n, idx) => <Icon key={idx.toString()} type='material-community' name={'dice-' + n}/> );
 
   return (
     <View style={styles.row}>
-      <Text style={[styles.defaultText, {width: 38}]}>{roll.sum}</Text>
+      {text !== undefined && <Text style={styles.defaultText}>{text}</Text>}
+      <Text style={[styles.defaultText, {width: 27, textAlign: 'right', paddingRight: 4}]}>{roll.sum}</Text>
       {dice}
     </View>
   );
@@ -291,7 +309,8 @@ function SizeSelector(sizes, stateValue, stateSetter) {
 
 function WeaponScreen({ navigation, route }) {
   const settings = useSelector(state => state.settings);
-  const sizes = route.params.sizes;
+  const weapon = route.params.weapon;
+  const sizes = weapon.sizes;
 
   const [size, setSize] = useState(sizes[0]);
   const [facing, setFacing] = useState(Facing.C);
@@ -345,11 +364,18 @@ function WeaponScreen({ navigation, route }) {
   );
 
   const doRoll = () => {
-    let newClusterRoll = roll2D6();
-    let hits = clusterHitsTable[size][newClusterRoll.sum];
-    let rolls = [...Array(hits)].map(roll2D6).map((roll, idx) => {
+    const newClusterRoll = roll2D6();
+    const hits = clusterHitsTable[size][newClusterRoll.sum];
+    const groups = weapon.grouped ? Math.ceil(hits / 5) : hits;
+    const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
+      let damage = weapon.damage;
+
+      if (weapon.grouped) {
+        damage = idx == groups - 1 ? (hits % 5 || 5) : 5;
+      }
+
       if (settings.floatingCrits && roll.sum == 2) {
-        let reroll = {
+        const reroll = {
           roll: roll2D6(),
           reason: Reroll.FloatingCrit,
         };
@@ -360,7 +386,9 @@ function WeaponScreen({ navigation, route }) {
           hit: {
             type: HitType.FloatingCrit,
             locationIndex: reroll.roll.sum,
+            damage: damage,
           },
+          showDetail: false,
         };
       } else if (settings.confirmHeadHits && roll.sum == 12) {
         let reroll = {
@@ -375,7 +403,9 @@ function WeaponScreen({ navigation, route }) {
           hit: {
             type: isConfirmed ? HitType.ConfirmedHeadHit : HitType.UnconfirmedHeadHit,
             location_: isConfirmed ? Location.H : Location.CT,
+            damage: damage,
           },
+          showDetail: false,
         };
       } else {
         return {
@@ -383,7 +413,9 @@ function WeaponScreen({ navigation, route }) {
           hit: {
             type: roll.sum == 2 ? HitType.Critical : HitType.Regular,
             locationIndex: roll.sum,
-          }
+            damage: damage,
+          },
+          showDetail: false,
         };
       }
     });
@@ -395,30 +427,55 @@ function WeaponScreen({ navigation, route }) {
     });
   };
 
-  const renderItem = ({item, index}) => {
+  const toggleDetail = (item, index) => {
+    const enabled = !item.showDetail;
+
+    setRolls({
+      ...rolls,
+      rolls: [
+        ...rolls.rolls.slice(0, index),
+        {...item, showDetail: enabled},
+        ...rolls.rolls.slice(index + 1),
+      ],
+    });
+  };
+
+  const renderItem = ({item, index, separators}) => {
     let hitLocation = item.hit.location_ || hitLocationTable[facing][item.hit.locationIndex]
 
+    var flag = null;
+    if (item.hit.type == HitType.Critical || item.hit.type == HitType.FloatingCrit) {
+      flag = 'warning';
+    } else if (item.hit.type == HitType.UnconfirmedHeadHit || item.hit.type == HitType.ConfirmedHeadHit) {
+      flag = 'info';
+    }
+
     return (
-      <View style={styles.row}>
-        <Roll roll={item}/>
-        <Text style={styles.defaultText}>{hitLocation}</Text>
-        {(item.hit.type == HitType.Critical || item.hit.type == HitType.FloatingCrit) && <Text style={styles.defaultText}> (Crit!)</Text>}
-        {item.hit.type == HitType.UnconfirmedHeadHit && <Text style={styles.defaultText}> (Unconfirmed, rolled {item.reroll.roll.sum})</Text>}
-        {item.hit.type == HitType.ConfirmedHeadHit && <Text style={styles.defaultText}> (Confirmed, rolled {item.reroll.roll.sum})</Text>}
-      </View>
+      <Pressable onPress={() => toggleDetail(item, index)}>
+        <View style={styles.row}>
+          <View style={styles.hitTableRoll}><Roll roll={item}/></View>
+          <Text style={[styles.defaultText, styles.hitTableLocation]}>{hitLocation}</Text>
+          <View style={[styles.row, styles.hitTableDamage]}>
+            <Text style={styles.defaultText}>{item.hit.damage}</Text>
+            {flag !== null && <Icon name={flag}/>}
+          </View>
+        </View>
+        {item.showDetail && (
+          <View style={styles.container}>
+            {item.hit.type == HitType.FloatingCrit && <Roll roll={item.reroll.roll} text='Floating crit, rolled'/>}
+            {item.hit.type == HitType.UnconfirmedHeadHit && <Roll roll={item.reroll.roll} text='Unconfirmed head hit, rolled'/>}
+            {item.hit.type == HitType.ConfirmedHeadHit && <Roll roll={item.reroll.roll} text='Confirmed head hit, rolled'/>}
+          </View>
+        )}
+      </Pressable>
     );
   };
 
   let showResult = () => {
     return (
-      <View>
-        <View style={styles.row}>
-          <Text style={styles.defaultText}>Cluster roll:</Text>
-          <Roll roll={rolls.clusterRoll}/>
-        </View>
-        <View style={[styles.row, styles.padded]}>
-          <Text style={styles.defaultText}>Cluster hits: {rolls.hits}</Text>
-        </View>
+      <View style={[styles.row, {paddingBottom: 15}]}>
+        <Roll roll={rolls.clusterRoll} text='Cluster roll:'/>
+        <Text style={styles.defaultText}> ({rolls.hits} hits)</Text>
       </View>
     );
   };
@@ -427,6 +484,9 @@ function WeaponScreen({ navigation, route }) {
 
   return (
     <FlatList
+      ItemSeparatorComponent={({highlighted}) =>
+        <View style={[styles.separator, {marginHorizontal: '2%'}]}/>
+      }
       ListHeaderComponent={
       <>
         <View style={styles.container}>
@@ -443,9 +503,16 @@ function WeaponScreen({ navigation, route }) {
 
           {rolls.clusterRoll.sum > 0 && showResult()}
         </View>
+        <View style={styles.row}>
+          <Text style={[styles.defaultText, styles.hitTableRoll]}>Roll</Text>
+          <Text style={[styles.defaultText, styles.hitTableLocation]}>Location</Text>
+          <Text style={[styles.defaultText, styles.hitTableDamage]}>Damage</Text>
+          <View style={styles.separator}/>
+        </View>
       </>}
       ListFooterComponent={
       <>
+        <View style={[styles.separator, {marginHorizontal: '2%'}]}/>
         <HitTally rolls={rolls.rolls} facing={facing} />
       </>
       }
@@ -464,10 +531,10 @@ const WeaponSizeContext = React.createContext([]);
 function MainStackScreen() {
   return (
     <Drawer.Navigator tabBarPosition='bottom' drawerContent={(props) => <CustomDrawerContent {...props} />}>
-      <Drawer.Screen name='LB-X Autocannon' component={WeaponScreen} initialParams={{sizes: [20, 10, 5, 2]}} />
-      <Drawer.Screen name='Long-Range Missiles (LRM)' component={WeaponScreen} initialParams={{sizes: [20, 10, 5, 2]}} />
-      <Drawer.Screen name='Medium-Range Missiles (MRM)' component={WeaponScreen} initialParams={{sizes: [40, 30, 20, 10]}} />
-      <Drawer.Screen name='Short-Range Missiles (SRM)' component={WeaponScreen} initialParams={{sizes: [6, 4, 2]}} />
+      <Drawer.Screen name={Weapon.LBX.name} component={WeaponScreen} initialParams={{weapon: Weapon.LBX}} />
+      <Drawer.Screen name={Weapon.LRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.LRM}} />
+      <Drawer.Screen name={Weapon.MRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.MRM}} />
+      <Drawer.Screen name={Weapon.SRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.SRM}} />
     </Drawer.Navigator>
   );
 }
@@ -504,7 +571,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: '2%',
+    paddingHorizontal: '2%',
   },
   scrollContainer: {
     backgroundColor: '#fff',
@@ -564,5 +631,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  separator: {
+    height: 1,
+    width: '100%',
+    backgroundColor: '#ccc',
+  },
+  hitTableRoll: {
+    alignItems: 'center',
+    textAlign: 'center',
+    width: '30%',
+  },
+  hitTableLocation: {
+    justifyContent: 'center',
+    textAlign: 'center',
+    width: '40%',
+  },
+  hitTableDamage: {
+    justifyContent: 'space-between',
+    width: '26%',
   },
 });

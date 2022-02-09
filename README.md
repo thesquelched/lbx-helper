@@ -18,7 +18,7 @@ React Native app to help with rolling clusters in Battletech.
     * Artemis IV/V FCS
     * AMS
     * Apollo FCS
-* Optinoal settings
+* Optional settings
     * Floating crits
     * Confirm head hits (50% chance for head hit to instead hit center torso)
 

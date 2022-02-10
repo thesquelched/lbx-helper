@@ -13,6 +13,8 @@ React Native app to help with rolling clusters in Battletech.
     * LRM
     * MRM
     * SRM
+    * Hyper-Assault Gauss Rifle
+    * Silver Bullet Gauss Rifle
 * Supports the following equipment that modifies cluster rolls:
     * NARC
     * Artemis IV/V FCS
@@ -25,7 +27,6 @@ React Native app to help with rolling clusters in Battletech.
 ## TODO
 
 * More weapons
-    * HAG
     * MML
     * ATM
 * Vehicle locations

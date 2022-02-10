@@ -151,17 +151,23 @@ const Modifier = {
   },
 };
 
-function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[]} = {}) {
+const Range = {
+  Short: 'Short',
+  Medium: 'Medium',
+  Long: 'Long',
+};
+
+function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[], rangeModifiers={}}) {
   return {
     name: name,
     sizes: sizes,
     damage: damage,
     grouped: grouped,
     modifiers: modifiers,
+    rangeModifiers: rangeModifiers,
   };
 }
 
-let a = 'foo';
 const Weapon = {
   LBX: makeWeapon({
     name: 'LB-X Autocannon',
@@ -184,6 +190,20 @@ const Weapon = {
     damage: 2,
     grouped: false,
     modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
+  }),
+  HAG: makeWeapon({
+    name: 'Hyper-Assault Gauss (HAG)',
+    sizes: [40, 30, 20],
+    rangeModifiers: {
+      [Range.Long]: -2,
+      [Range.Medium]: 0,
+      [Range.Short]: 2,
+    },
+  }),
+  SBG: makeWeapon({
+    name: 'Silver Bullet Gauss Rifle',
+    sizes: [15],
+    grouped: false,
   }),
 };
 
@@ -350,7 +370,7 @@ function SettingsScreen({ navigation }) {
   );
 }
 
-function ModifiersSelector(weapon, stateValue, stateSetter) {
+function ModifiersSelector({weapon, stateValue, stateSetter}) {
   if (weapon.modifiers.length == 0) {
     return <></>;
   }
@@ -398,25 +418,29 @@ function ModifiersSelector(weapon, stateValue, stateSetter) {
   );
 }
 
-function SizeSelector(sizes, stateValue, stateSetter) {
-  let buttons = sizes.map((size, idx) => {
+function MutuallyExclusiveSelector({label, items, stateValue, stateSetter}) {
+  if (items.length <= 1) {
+    return <></>;
+  }
+
+  let buttons = items.map((item, idx) => {
     return (
       <TouchableOpacity
         key={idx.toString()}
         style={[
           styles.sizeButton,
-          idx == 0 ? styles.buttonLeft : (idx == sizes.length - 1 ? styles.buttonRight : {}),
-          stateValue == size ? styles.focusedButton : {},
+          idx == 0 ? styles.buttonLeft : (idx == items.length - 1 ? styles.buttonRight : {}),
+          stateValue == item ? styles.focusedButton : {},
          ]}
-        onPress={ () => stateSetter(size) } >
-        <Text style={styles.sideText}>{size}</Text>
+        onPress={ () => stateSetter(item) } >
+        <Text style={styles.sideText}>{item}</Text>
       </TouchableOpacity>
     );
   });
 
   return (
     <View style={[styles.row, styles.optionView, {justifyContent: 'space-between'}]}>
-      <Text style={styles.optionText}>Size</Text>
+      <Text style={styles.optionText}>{label}</Text>
       <View style={[styles.container, {
         flexDirection: 'row',
         justifyContent: 'flex-end',
@@ -434,6 +458,7 @@ function WeaponScreen({ navigation, route }) {
 
   const [size, setSize] = useState(sizes[0]);
   const [facing, setFacing] = useState(Facing.C);
+  const [range, setRange] = useState(Range.Medium);
 
   const initialModState = {};
   Object.values(weapon.modifiers).forEach(mod => initialModState[mod.id] = false);
@@ -446,6 +471,7 @@ function WeaponScreen({ navigation, route }) {
     hits: [],
     activeModifiers: [],
     totalModifier: 0,
+    rangeModifier: 0,
   });
 
   //useEffect(() => {
@@ -453,53 +479,24 @@ function WeaponScreen({ navigation, route }) {
   //  console.log('Roll state:', rolls);
   //});
   //
-  const facingView = (
-    <View style={[styles.row, styles.optionView, {justifyContent: 'space-between'}]}>
-      <Text style={styles.optionText}>Facing</Text>
-      <View style={[styles.container, {flexDirection: 'row', justifyContent: 'flex-end'}]}>
-        <TouchableOpacity
-          style={[
-            styles.facingButton,
-            styles.buttonLeft,
-            facing === Facing.L? styles.focusedButton : {},
-           ]}
-          onPress={ () => setFacing(Facing.L) } >
-          <Text style={styles.sideText}>{Facing.L}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.facingButton,
-            facing === Facing.C ? styles.focusedButton : {},
-          ]}
-          onPress={ () => setFacing(Facing.C) } >
-          <Text style={styles.sideText}>{Facing.C}</Text>
-        </TouchableOpacity>
-
-
-        <TouchableOpacity
-          style={[
-            styles.facingButton,
-            styles.buttonRight,
-            facing === Facing.R ? styles.focusedButton : {},
-          ]}
-          onPress={ () => setFacing(Facing.R) } >
-          <Text style={styles.sideText}>{Facing.R}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   const doRoll = () => {
     const activeModifiers = Object.keys(modifiers).filter(key => modifiers[key]).map(mod => Modifier[mod]);
-    const modifier = activeModifiers.map(mod => mod.value).reduce((a, b) => a + b, 0);
+
+    const rangeMods = weapon.rangeModifiers || {};
+    const rangeModifier = rangeMods[range] || 0;
+
+    const modifier = activeModifiers.map(mod => mod.value).reduce((a, b) => a + b, 0) + rangeModifier;
+
     const baseClusteRoll = roll2D6();
     const newClusterRoll = {
       ...baseClusteRoll,
       sum: Math.min(12, Math.max(2, baseClusteRoll.sum + modifier)),
     };
+
     const hits = clusterHitsTable[size][newClusterRoll.sum];
     const groups = weapon.grouped ? Math.ceil(hits / 5) : hits;
+
     const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
       let damage = weapon.damage;
 
@@ -556,6 +553,7 @@ function WeaponScreen({ navigation, route }) {
     setRolls({
       clusterRoll: newClusterRoll,
       modifiers: activeModifiers,
+      rangeModifier: rangeModifier,
       totalModifier: modifier,
       rolls: rolls,
       hits: hits,
@@ -610,17 +608,17 @@ function WeaponScreen({ navigation, route }) {
   let showResult = () => {
     return (
       <View style={[styles.row, {paddingBottom: 15}]}>
-        <Roll roll={rolls.clusterRoll} text='Cluster roll:'/>
-        {rolls.modifiers.length > 0 && (
+        <Roll roll={rolls.clusterRoll} text='Clusters: '/>
+        {(rolls.modifiers.length > 0 || rolls.rangeModifier != 0) && (
           <Text style={styles.defaultText}> (Mod: {rolls.totalModifier < 0 ? rolls.totalModifier : `+${rolls.totalModifier}`})</Text>
         )}
-        <Text style={styles.defaultText}> ({rolls.hits} hits)</Text>
+        <Text style={styles.defaultText}> ({rolls.hits}/{size} hits)</Text>
       </View>
     );
   };
 
-  const sizeView = SizeSelector(sizes, size, setSize);
-  const modView = ModifiersSelector(weapon, modifiers, setModifiers);
+  //const sizeView = SizeSelector(sizes, size, setSize);
+  //const modView = ModifiersSelector(weapon, modifiers, setModifiers);
 
   return (
     <FlatList
@@ -630,9 +628,12 @@ function WeaponScreen({ navigation, route }) {
       ListHeaderComponent={
       <>
         <View style={styles.container}>
-          {sizeView}
-          {modView}
-          {facingView}
+          <MutuallyExclusiveSelector label='Size' items={weapon.sizes} stateValue={size} stateSetter={setSize}/>
+          <ModifiersSelector weapon={weapon} stateValue={modifiers} stateSetter={setModifiers} />
+          <MutuallyExclusiveSelector label='Facing' items={Object.values(Facing)} stateValue={facing} stateSetter={setFacing}/>
+          {weapon.rangeModifiers.length > 0 && (
+          <MutuallyExclusiveSelector label='Range' items={Object.values(Range)} stateValue={range} stateSetter={setRange}/>
+          )}
 
           <TouchableOpacity
             onPress={doRoll}
@@ -671,12 +672,13 @@ const Stack = createStackNavigator();
 const WeaponSizeContext = React.createContext([]);
 
 function MainStackScreen() {
+  const weapons = Object.values(Weapon).map(weapon => (
+    <Drawer.Screen key={weapon.name} name={weapon.name} component={WeaponScreen} initialParams={{weapon: weapon}} />
+  ));
+
   return (
     <Drawer.Navigator tabBarPosition='bottom' drawerContent={(props) => <CustomDrawerContent {...props} />}>
-      <Drawer.Screen name={Weapon.LBX.name} component={WeaponScreen} initialParams={{weapon: Weapon.LBX}} />
-      <Drawer.Screen name={Weapon.LRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.LRM}} />
-      <Drawer.Screen name={Weapon.MRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.MRM}} />
-      <Drawer.Screen name={Weapon.SRM.name} component={WeaponScreen} initialParams={{weapon: Weapon.SRM}} />
+      {weapons}
     </Drawer.Navigator>
   );
 }
@@ -753,8 +755,8 @@ const styles = StyleSheet.create({
   sizeButton: {
     backgroundColor: '#ccc',
     marginHorizontal: 1,
-    padding: 12,
-    width: 50,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     alignItems: 'center',
   },
   modButton: {

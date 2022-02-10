@@ -24,6 +24,7 @@ import {
  DrawerItemList,
  DrawerItem,
 } from '@react-navigation/drawer';
+import { Svg, Polygon } from 'react-native-svg';
 
 import mech from './assets/mech.png';
 
@@ -64,6 +65,7 @@ const Location = {
   RA: 'Right Arm',
   H: 'Head',
 };
+
 
 const clusterHitsTable = {
   2:  [0, 0,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2],
@@ -290,6 +292,60 @@ function HitCount({tally, location_, weapon}) {
   );
 }
 
+const HitTallyOverlayCoords = {
+  [Location.LA]: [
+    '57,15',
+    '70,29',
+    '75,42,',
+    '75,48',
+    '64,56',
+    '63,65',
+    '66,65',
+    '67,97',
+    '62,96',
+    '62,100',
+    '59,102',
+    '56,135',
+    '54,138',
+    '54,143',
+    '55,146',
+    '52,190',
+    '50,193',
+    '20,191',
+    '12,178',
+    '18,143',
+    '21,140',
+    '22,135',
+    '20,132',
+    '23,96',
+    '9,85',
+    '10,75',
+    '22,73',
+    '12,62',
+    '15,51',
+    '29,52',
+    '25,32',
+    '32,28',
+    '47,36',
+    '47,18',
+  ].join(' '),
+};
+
+function HitOverlay({location_, color}) {
+  return (
+    <View style={{position: 'absolute', left: 0, top: 0}}>
+      <Svg height={400} width={280}>
+        <Polygon
+          points={HitTallyOverlayCoords[location_]}
+          stroke='none'
+          fill={color}
+          fillOpacity={0.5}
+        />
+      </Svg>
+    </View>
+  );
+}
+
 function HitTally({rolls, facing, weapon}) {
   if (rolls.length == 0) {
     return <></>;
@@ -324,6 +380,7 @@ function HitTally({rolls, facing, weapon}) {
       <Text style={styles.section}>Summary</Text>
       <View style={styles.container}>
         <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
+          <HitOverlay location_={Location.LA} color='purple'/>
           {counts}
         </ImageBackground>
       </View>

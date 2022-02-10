@@ -24,8 +24,7 @@ import {
  DrawerItemList,
  DrawerItem,
 } from '@react-navigation/drawer';
-
-import mech from './assets/mech.png';
+import { Svg, Polygon, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 const Theme = {
   ...DefaultTheme,
@@ -64,6 +63,7 @@ const Location = {
   RA: 'Right Arm',
   H: 'Head',
 };
+
 
 const clusterHitsTable = {
   2:  [0, 0,  1,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2],
@@ -285,7 +285,316 @@ function HitCount({tally, location_, weapon}) {
     <View style={[style, styles.hitCount]}>
       <Text>H: {hits.hits}</Text>
       {hits.crits > 0 && <Text>C: {hits.crits}</Text>}
-      {weapon.damage > 1 || weapon.grouped && <Text>D: {hits.damage}</Text>}
+      <Text>D: {hits.damage}</Text>
+    </View>
+  );
+}
+
+const HitTallyOverlayCoords = {
+  [Location.LA]: [
+    '57,15',
+    '70,29',
+    '75,42,',
+    '75,48',
+    '64,56',
+    '63,65',
+    '66,65',
+    '67,97',
+    '62,96',
+    '62,100',
+    '59,102',
+    '56,135',
+    '54,138',
+    '54,143',
+    '55,146',
+    '52,190',
+    '50,193',
+    '20,191',
+    '12,178',
+    '18,143',
+    '21,140',
+    '22,135',
+    '20,132',
+    '23,96',
+    '9,85',
+    '10,75',
+    '22,73',
+    '12,62',
+    '15,51',
+    '29,52',
+    '25,32',
+    '32,28',
+    '47,36',
+    '47,18',
+  ].join(' '),
+  [Location.LT]: [
+    "67,55",
+    "109,52",
+    "114,52",
+    "114,120",
+    "118,160",
+    "118,193",
+    "77,193",
+    "76,192",
+    "77,166",
+    "98,161",
+    "93,149",
+    "89,131",
+    "88,118",
+    "71,116",
+    "68,112",
+    "66,58",
+  ].join(' '),
+  [Location.CT]: [
+    "114,52",
+    "114,120",
+    "118,160",
+    "118,193",
+    "120,215",
+    "124,219",
+    "157,219",
+    "160,215",
+    "161,193",
+    "161,160",
+    "165,120",
+    "166,52",
+    // Neck
+    "164,52",
+    "163,58",
+    "162,62",
+    "161,67",
+    "158,73",
+    "151,79",
+    "144,81",
+    // midpoint
+    "136,81",
+    "129,79",
+    "122,73",
+    "119,67",
+    "118,62",
+    "117,58",
+    "116,52",
+    // End neck
+  ].join(' '),
+  [Location.RT]: [
+    "212,55",
+    "171,52",
+    "166,52",
+    "165,120",
+    "161,160",
+    "161,193",
+    "202,193",
+    "203,192",
+    "202,166",
+    "181,161",
+    "186,149",
+    "190,131",
+    "191,118",
+    "208,116",
+    "211,112",
+    "213,58",
+  ].join(' '),
+  [Location.RA]: [
+    '222,15',
+    '209,29',
+    '204,42,',
+    '204,48',
+    '215,56',
+    '216,65',
+    '213,65',
+    '212,97',
+    '217,96',
+    '217,100',
+    '220,102',
+    '223,135',
+    '225,138',
+    '225,143',
+    '224,146',
+    '227,190',
+    '229,193',
+    '259,191',
+    '267,178',
+    '261,143',
+    '258,140',
+    '257,135',
+    '259,132',
+    '256,96',
+    '270,85',
+    '269,75',
+    '255,73',
+    '265,62',
+    '262,51',
+    '248,52',
+    '252,32',
+    '245,28',
+    '230,36',
+    '230,18',
+  ].join(' '),
+  [Location.H]: [
+    "148,7",
+    "150,10",
+    "150,16",
+    "155,20",
+    "158,25",
+    "160,31",
+    "168,31",
+    "171,34",
+    "171,52",
+    // Neck
+    "164,52",
+    "163,58",
+    "162,62",
+    "161,67",
+    "158,73",
+    "151,79",
+    "144,81",
+    // midpoint
+    "136,81",
+    "129,79",
+    "122,73",
+    "119,67",
+    "118,62",
+    "117,58",
+    "116,52",
+    // End neck
+    "109,52",
+    "109,34",
+    "112,31",
+    "120,31",
+    "122,25",
+    "125,20",
+    "130,16",
+    "130,10",
+    "132,7",
+  ].join(' '),
+  [Location.LL]: [
+    "118,193",
+    "120,215",
+    "124,219",
+    "112,260",
+    "115,263",
+    "107,270",
+    "106,280",
+    "104,290",
+    "105,291",
+    "106,340",
+    "99,351",
+    "89,352",
+    "87,364",
+    "84,365",
+    "84,376",
+    "89,379",
+    "89,383",
+    "92,386",
+    "92,393",
+    "23,393",
+    "23,386",
+    "26,385",
+    "27,381",
+    "43,374",
+    "46,368",
+    "40,364",
+    "44,344",
+    "39,339",
+    "39,332",
+    "57,288",
+    "59,286",
+    "59,266",
+    "62,251",
+    "69,251",
+    "83,193",
+  ].join(' '),
+  [Location.RL]: [
+    "161,193",
+    "159,215",
+    "155,219",
+    "167,260",
+    "164,263",
+    "172,270",
+    "173,280",
+    "175,290",
+    "174,291",
+    "173,340",
+    "180,351",
+    "190,352",
+    "192,364",
+    "195,365",
+    "195,376",
+    "190,379",
+    "190,383",
+    "187,386",
+    "187,393",
+    "256,393",
+    "256,386",
+    "253,385",
+    "252,381",
+    "238,374",
+    "235,368",
+    "241,364",
+    "237,344",
+    "242,339",
+    "242,332",
+    "224,288",
+    "222,286",
+    "222,266",
+    "219,251",
+    "212,251",
+    "198,193",
+  ].join(' '),
+};
+
+function makeColor(r, g, b) {
+  return {r: r, g: g, b: b};
+}
+
+function HitOverlay({tally, weapon}) {
+  const totalDamage = Object.values(tally).map(data => data.damage).reduce((a, b) => a + b, 0);
+
+  const startColor = makeColor(255, 255, 102);
+  const endColor = makeColor(255, 0, 0);
+
+  const interpolate = (a, b, fraction) => Math.round(a * (1 - fraction) + b * fraction);
+
+  const gradientColor = (damage) => {
+    if (damage == 0) {
+      return 'rgb(255, 255, 255)';
+    }
+
+    const fraction = damage / totalDamage;
+    const r = interpolate(startColor.r, endColor.r, fraction);
+    const g = interpolate(startColor.g, endColor.g, fraction);
+    const b = interpolate(startColor.b, endColor.b, fraction);
+
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  const polygons = Object.keys(tally).map(loc => {
+    const {hits, crits, damage} = tally[loc];
+    const color = gradientColor(damage);
+
+    return (
+      <Polygon
+        key={loc}
+        points={HitTallyOverlayCoords[loc]}
+        stroke='black'
+        strokeWidth={2}
+        fill={color}
+        fillOpacity={1}
+      />
+    );
+  });
+
+  return (
+    <View style={{position: 'absolute', left: 0, top: 0}}>
+      <Svg height={400} width={280}>
+        <Defs>
+          <LinearGradient id='hitGrad' x1={0} y1={0} x2={1} y2={0}>
+            <Stop offset={0} stopColor='#ffd080' stopOpacity={0.5}/>
+            <Stop offset={1} stopColor='red' stopOpacity={0.5}/>
+          </LinearGradient>
+        </Defs>
+        {polygons}
+      </Svg>
     </View>
   );
 }
@@ -323,9 +632,10 @@ function HitTally({rolls, facing, weapon}) {
     <View style={[styles.container, {paddingTop: 20}]}>
       <Text style={styles.section}>Summary</Text>
       <View style={styles.container}>
-        <ImageBackground source={mech} style={{ height: 400, width: 280 }}>
+        <View style={{ height: 400, width: 280 }}>
+          <HitOverlay tally={tally} weapon={weapon}/>
           {counts}
-        </ImageBackground>
+        </View>
       </View>
     </View>
   );

@@ -1,10 +1,18 @@
 # lbx-helper
 
-React Native app to help with rolling clusters in Battletech.
+React Native app to help with the *annoying* parts of rolling clusters in Battletech:
+
+* Number of cluster hits (including modifiers)
+* Hit locations (including floating crits)
+
+It won't do the *fun* parts:
+
+* Rolling to hit
+* Rolling criticals and locations
 
 ![lbx](./lbx.gif)
 
-![lrm](./lrm.gif)
+![atm](./atm.gif)
 
 ## Features
 

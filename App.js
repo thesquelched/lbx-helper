@@ -971,7 +971,7 @@ function WeaponScreen({ navigation, route }) {
           <MutuallyExclusiveSelector label='Size' items={weapon.sizes} stateValue={size} stateSetter={setSize} />
           <ModifiersSelector weapon={weapon} stateValue={modifiers} stateSetter={setModifiers} />
           <MutuallyExclusiveSelector label='Facing' items={Object.values(Facing)} stateValue={facing} stateSetter={setFacing} />
-          {weapon.rangeModifiers.length > 0 && (
+          {Object.keys(weapon.rangeModifiers).length > 0 && (
           <MutuallyExclusiveSelector label='Range' items={Object.values(Range)} stateValue={range} stateSetter={setRange} />
           )}
           <MutuallyExclusiveSelector label='Mode' items={modeIds} stateValue={mode} stateSetter={setMode} />

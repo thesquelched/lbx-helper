@@ -2,8 +2,19 @@ import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import { Provider, connect, useDispatch, useSelector } from 'react-redux';
 import { createStore, combineReducers } from 'redux';
-import { StatusBar } from 'expo-status-bar';
-import { FlatList, Pressable, ImageBackground, StyleSheet, Text, Switch, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import {
+  FlatList,
+  ImageBackground,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -706,6 +717,7 @@ function MainStackScreen() {
 export default function App() {
   return (
     <Provider store={store}>
+      <StatusBar />
       <NavigationContainer theme={Theme}>
         <Stack.Navigator>
           <Stack.Group>

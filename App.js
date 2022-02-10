@@ -157,7 +157,7 @@ const Range = {
   Long: 'Long',
 };
 
-function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[], rangeModifiers={}}) {
+function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[], rangeModifiers={}, modes={}, defaultModifiers=[]}) {
   return {
     name: name,
     sizes: sizes,
@@ -165,8 +165,11 @@ function makeWeapon({name, sizes, damage=1, grouped=true, modifiers=[], rangeMod
     grouped: grouped,
     modifiers: modifiers,
     rangeModifiers: rangeModifiers,
+    modes: modes,
+    defaultModifiers: defaultModifiers.map(mod => mod.id),
   };
 }
+
 
 const Weapon = {
   LBX: makeWeapon({
@@ -190,6 +193,18 @@ const Weapon = {
     damage: 2,
     grouped: false,
     modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
+  }),
+  ATM: makeWeapon({
+    name: 'Advanced Tactical Missile (ATM)',
+    sizes: [12, 9, 6, 3],
+    modes: {
+      Standard: {'id': 'Standard', damage: 2},
+      ER: {'id': 'ER', damage: 1},
+      HE: {'id': 'HE', damage: 3},
+    },
+    grouped: false,
+    modifiers: [Modifier.ArtemisIV, Modifier.AMS],
+    defaultModifiers: [Modifier.ArtemisIV],
   }),
   HAG: makeWeapon({
     name: 'Hyper-Assault Gauss (HAG)',
@@ -456,12 +471,16 @@ function WeaponScreen({ navigation, route }) {
   const weapon = route.params.weapon;
   const sizes = weapon.sizes;
 
+  const modes = Object.keys(weapon.modes).length > 0 ? weapon.modes : {NullMode: {id: 'NullMode', damage: weapon.damage}};
+  const modeIds = Object.values(modes).map(mode => mode.id);
+
   const [size, setSize] = useState(sizes[0]);
   const [facing, setFacing] = useState(Facing.C);
   const [range, setRange] = useState(Range.Medium);
+  const [mode, setMode] = useState(modeIds[0]);
 
   const initialModState = {};
-  Object.values(weapon.modifiers).forEach(mod => initialModState[mod.id] = false);
+  Object.values(weapon.modifiers).forEach(mod => initialModState[mod.id] = weapon.defaultModifiers.find(element => element === mod.id) !== undefined);
 
   const [modifiers, setModifiers] = useState(initialModState);
 
@@ -498,7 +517,7 @@ function WeaponScreen({ navigation, route }) {
     const groups = weapon.grouped ? Math.ceil(hits / 5) : hits;
 
     const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
-      let damage = weapon.damage;
+      let damage = modes[mode].damage;
 
       if (weapon.grouped) {
         damage = idx == groups - 1 ? (hits % 5 || 5) : 5;
@@ -628,12 +647,13 @@ function WeaponScreen({ navigation, route }) {
       ListHeaderComponent={
       <>
         <View style={styles.container}>
-          <MutuallyExclusiveSelector label='Size' items={weapon.sizes} stateValue={size} stateSetter={setSize}/>
+          <MutuallyExclusiveSelector label='Size' items={weapon.sizes} stateValue={size} stateSetter={setSize} />
           <ModifiersSelector weapon={weapon} stateValue={modifiers} stateSetter={setModifiers} />
-          <MutuallyExclusiveSelector label='Facing' items={Object.values(Facing)} stateValue={facing} stateSetter={setFacing}/>
+          <MutuallyExclusiveSelector label='Facing' items={Object.values(Facing)} stateValue={facing} stateSetter={setFacing} />
           {weapon.rangeModifiers.length > 0 && (
-          <MutuallyExclusiveSelector label='Range' items={Object.values(Range)} stateValue={range} stateSetter={setRange}/>
+          <MutuallyExclusiveSelector label='Range' items={Object.values(Range)} stateValue={range} stateSetter={setRange} />
           )}
+          <MutuallyExclusiveSelector label='Mode' items={modeIds} stateValue={mode} stateSetter={setMode} />
 
           <TouchableOpacity
             onPress={doRoll}

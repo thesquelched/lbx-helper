@@ -10,9 +10,10 @@ React Native app to help with rolling clusters in Battletech.
 
 * Supports the following weapons:
     * LB-X autocannon
-    * LRM
-    * MRM
-    * SRM
+    * Long-Range Missiles (LRM)
+    * Medium-Range Missiles (MRM)
+    * Short-Range Missiles (SRM)
+    * Advanced Tactical Missiles (ATM)
     * Hyper-Assault Gauss Rifle
     * Silver Bullet Gauss Rifle
 * Supports the following equipment that modifies cluster rolls:
@@ -28,5 +29,5 @@ React Native app to help with rolling clusters in Battletech.
 
 * More weapons
     * MML
-    * ATM
+    * Rocket launchers
 * Vehicle locations

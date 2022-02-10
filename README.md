@@ -10,7 +10,13 @@ It won't do the *fun* parts:
 * Rolling to hit
 * Rolling criticals and locations
 
+## Examples
+
+### LB-X Autocannon
+
 ![lbx](./lbx.gif)
+
+### Advanced Tactical Missiles
 
 ![atm](./atm.gif)
 

@@ -213,7 +213,7 @@ const Weapon = {
       ER: {'id': 'ER', damage: 1},
       HE: {'id': 'HE', damage: 3},
     },
-    grouped: false,
+    grouped: true,
     modifiers: [Modifier.ArtemisIV, Modifier.AMS],
     defaultModifiers: [Modifier.ArtemisIV],
   }),
@@ -821,6 +821,7 @@ function WeaponScreen({ navigation, route }) {
   //
 
   const doRoll = () => {
+    const weaponDamage = modes[mode].damage;
     const activeModifiers = Object.keys(modifiers).filter(key => modifiers[key]).map(mod => Modifier[mod]);
 
     const rangeMods = weapon.rangeModifiers || {};
@@ -835,13 +836,15 @@ function WeaponScreen({ navigation, route }) {
     };
 
     const hits = clusterHitsTable[size][newClusterRoll.sum];
-    const groups = weapon.grouped ? Math.ceil(hits / 5) : hits;
+    const totalDamage = hits * weaponDamage;
+
+    const groups = weapon.grouped ? Math.ceil(totalDamage / 5) : hits;
 
     const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
-      let damage = modes[mode].damage;
+      let damage = weaponDamage;
 
       if (weapon.grouped) {
-        damage = idx == groups - 1 ? (hits % 5 || 5) : 5;
+        damage = idx == groups - 1 ? (totalDamage % 5 || 5) : 5;
       }
 
       if (settings.floatingCrits && roll.sum == 2) {

@@ -226,6 +226,11 @@ const Weapon = {
     },
     modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
   }),
+  Rocket: makeWeapon({
+    name: 'Rocket Launcher',
+    sizes: [20, 15, 10],
+    modifiers: [Modifier.AMS],
+  }),
   HAG: makeWeapon({
     name: 'Hyper-Assault Gauss (HAG)',
     sizes: [40, 30, 20],

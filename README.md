@@ -28,6 +28,7 @@ It won't do the *fun* parts:
     * Medium-Range Missiles (MRM)
     * Short-Range Missiles (SRM)
     * Advanced Tactical Missiles (ATM)
+    * Multi-Missile Launcher (MML)
     * Hyper-Assault Gauss Rifle
     * Silver Bullet Gauss Rifle
 * Supports the following equipment that modifies cluster rolls:
@@ -42,6 +43,5 @@ It won't do the *fun* parts:
 ## TODO
 
 * More weapons
-    * MML
     * Rocket launchers
 * Vehicle locations

@@ -217,6 +217,15 @@ const Weapon = {
     modifiers: [Modifier.ArtemisIV, Modifier.AMS],
     defaultModifiers: [Modifier.ArtemisIV],
   }),
+  MML: makeWeapon({
+    name: 'Multi-Missile Launcher (MML)',
+    sizes: [9, 7, 5, 3],
+    modes: {
+      LRM: {'id': 'LRM', damage: 1, grouped: true},
+      SRM: {'id': 'SRM', damage: 2, grouped: false},
+    },
+    modifiers: [Modifier.ArtemisIV, Modifier.ArtemisV, Modifier.NARC, Modifier.AMS],
+  }),
   HAG: makeWeapon({
     name: 'Hyper-Assault Gauss (HAG)',
     sizes: [40, 30, 20],
@@ -792,7 +801,18 @@ function WeaponScreen({ navigation, route }) {
   const weapon = route.params.weapon;
   const sizes = weapon.sizes;
 
-  const modes = Object.keys(weapon.modes).length > 0 ? weapon.modes : {NullMode: {id: 'NullMode', damage: weapon.damage}};
+  const modes = {};
+  if (Object.keys(weapon.modes).length > 0) {
+    for (const key in weapon.modes) {
+      modes[key] = {
+        ...weapon.modes[key],
+        grouped: weapon.modes[key].grouped !== undefined ? weapon.modes[key].grouped : weapon.grouped
+      };
+    }
+  } else {
+    modes['NullMode'] = {id: 'NullMode', damage: weapon.damage, grouped: weapon.grouped};
+  }
+
   const modeIds = Object.values(modes).map(mode => mode.id);
 
   const [size, setSize] = useState(sizes[0]);
@@ -822,6 +842,8 @@ function WeaponScreen({ navigation, route }) {
 
   const doRoll = () => {
     const weaponDamage = modes[mode].damage;
+    const grouped = modes[mode].grouped;
+
     const activeModifiers = Object.keys(modifiers).filter(key => modifiers[key]).map(mod => Modifier[mod]);
 
     const rangeMods = weapon.rangeModifiers || {};
@@ -838,12 +860,12 @@ function WeaponScreen({ navigation, route }) {
     const hits = clusterHitsTable[size][newClusterRoll.sum];
     const totalDamage = hits * weaponDamage;
 
-    const groups = weapon.grouped ? Math.ceil(totalDamage / 5) : hits;
+    const groups = grouped ? Math.ceil(totalDamage / 5) : hits;
 
     const rolls = [...Array(groups)].map(roll2D6).map((roll, idx) => {
       let damage = weaponDamage;
 
-      if (weapon.grouped) {
+      if (grouped) {
         damage = idx == groups - 1 ? (totalDamage % 5 || 5) : 5;
       }
 
@@ -951,7 +973,7 @@ function WeaponScreen({ navigation, route }) {
   let showResult = () => {
     return (
       <View style={[styles.row, {paddingBottom: 15}]}>
-        <Roll roll={rolls.clusterRoll} text='Clusters: '/>
+        <Roll roll={rolls.clusterRoll} text='Clusters roll: '/>
         {(rolls.modifiers.length > 0 || rolls.rangeModifier != 0) && (
           <Text style={styles.defaultText}> (Mod: {rolls.totalModifier < 0 ? rolls.totalModifier : `+${rolls.totalModifier}`})</Text>
         )}

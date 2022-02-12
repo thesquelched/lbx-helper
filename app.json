@@ -2,7 +2,7 @@
   "expo": {
     "name": "lbx-helper",
     "slug": "lbx-helper",
-    "version": "1.0.0",
+    "version": "1.0.0-rc1",
     "githubUrl": "https://github.com/thesquelched/lbx-helper",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

@@ -1,4 +1,4 @@
-# lbx-helper
+# LBX Helper
 
 React Native app to help with the *annoying* parts of rolling clusters in Battletech:
 
@@ -15,10 +15,6 @@ It won't do the *fun* parts:
 ### LB-X Autocannon
 
 ![lbx](./lbx.gif)
-
-### Advanced Tactical Missiles
-
-![atm](./atm.gif)
 
 ## Features
 
